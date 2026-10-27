@@ -11,7 +11,7 @@ export interface ViewportSize {
 export function computeViewport(availableWidth: number, availableHeight: number, dpr: number): ViewportSize {
   const raw = Math.max(Math.min((availableWidth * dpr) / WORLD.width, (availableHeight * dpr) / WORLD.height), 0.01);
   const integer = Math.floor(raw);
-  const pixelScale = integer >= 1 && integer / raw >= VIEWPORT.minIntegerFill ? integer : raw;
+  const pixelScale = integer >= 2 && integer / raw >= VIEWPORT.minIntegerFill ? integer : raw;
   const bufferWidth = Math.round(WORLD.width * pixelScale);
   const bufferHeight = Math.round(WORLD.height * pixelScale);
 
@@ -38,7 +38,19 @@ export function fitCanvas(canvas: HTMLCanvasElement, container: HTMLElement, onR
     onResize(size);
   };
 
+  let dprQuery: MediaQueryList | null = null;
+  const onDprChange = (): void => {
+    apply();
+    watchDpr();
+  };
+  const watchDpr = (): void => {
+    dprQuery?.removeEventListener('change', onDprChange);
+    dprQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    dprQuery.addEventListener('change', onDprChange);
+  };
+
   new ResizeObserver(apply).observe(container);
   window.addEventListener('resize', apply);
+  watchDpr();
   apply();
 }
